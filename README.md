@@ -42,7 +42,7 @@ The game is not turn-based. Neo and each of the Agents are an independent thread
 
 ---
 
-## **Architectural Improvements (Single Responsibility Principle)**
+## **Architectural Improvements**
 
 1. Isolated BFS: Instead of having all the massive algorithmic logic in the Tablero, the routing algorithm (BFS) was extracted to the threads base class PersonajeMovil.
 2. Snapshots: Threads ask the board for a photo and calculate their route on it. This prevents locking the entire board while a thread thinks, which drastically improves performance and concurrent fluidity.

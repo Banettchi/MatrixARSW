@@ -10,9 +10,7 @@ import javax.swing.border.EmptyBorder;
 
 public class VentanaJuego extends JFrame {
 
-    private static final int TAMANO = 8;
-
-    private static final Color C_BG = new Color(18, 18, 28);
+    private int tamanoActual = 8;    private static final Color C_BG = new Color(18, 18, 28);
     private static final Color C_PANEL = new Color(24, 24, 38);
     private static final Color C_TEXT = new Color(210, 210, 228);
     private static final Color C_SUB = new Color(130, 130, 158);
@@ -37,9 +35,9 @@ public class VentanaJuego extends JFrame {
         setDefaultCloseOperation(EXIT_ON_CLOSE);
         getContentPane().setBackground(C_BG);
 
-        tablero = new Tablero(TAMANO);
+        tablero = new Tablero(tamanoActual);
         tablero.setOnCambio(() -> SwingUtilities.invokeLater(this::refrescar));
-        panelTablero = new PanelTablero(TAMANO);
+        panelTablero = new PanelTablero(tamanoActual);
 
         construirUI();
         pack();
@@ -99,6 +97,20 @@ public class VentanaJuego extends JFrame {
         JButton btnLimpiar = boton("Limpiar tablero", new Color(70, 35, 35));
         btnLimpiar.addActionListener(e -> limpiarTablero());
         agrega(p, btnLimpiar);
+        p.add(gap(14));
+
+        agrega(p, label("Tamaño tablero:", 11, Font.PLAIN, C_SUB));
+        p.add(gap(4));
+
+        JSpinner spinnerTamano = new JSpinner(new SpinnerNumberModel(8, 6, 20, 1));
+        spinnerTamano.setMaximumSize(new Dimension(Integer.MAX_VALUE, 30));
+        spinnerTamano.setAlignmentX(LEFT_ALIGNMENT);
+        estilizarSpinner(spinnerTamano);
+        spinnerTamano.addChangeListener(e -> {
+            tamanoActual = (int) spinnerTamano.getValue();
+            cambiarTamanoTablero();
+        });
+        p.add(spinnerTamano);
         p.add(gap(14));
 
         agrega(p, label("Número de agentes:", 11, Font.PLAIN, C_SUB));
@@ -237,8 +249,8 @@ public class VentanaJuego extends JFrame {
 
     private void ponerRandom(char ch) {
         while (true) {
-            int f = (int) (Math.random() * 8);
-            int c = (int) (Math.random() * 8);
+            int f = (int) (Math.random() * tamanoActual);
+            int c = (int) (Math.random() * tamanoActual);
             if (tablero.getCell(f, c) == '.') {
                 if (ch == 'N') tablero.colocarNeo(f, c);
                 else if (ch == 'A') tablero.colocarAgente(f, c);
@@ -251,8 +263,8 @@ public class VentanaJuego extends JFrame {
 
     private void quitarNeoExistente() {
         char[][] snap = tablero.getSnapshot();
-        for (int i = 0; i < TAMANO; i++) {
-            for (int j = 0; j < TAMANO; j++) {
+        for (int i = 0; i < tamanoActual; i++) {
+            for (int j = 0; j < tamanoActual; j++) {
                 if (snap[i][j] == 'N') {
                     tablero.limpiarCelda(i, j);
                     return;
@@ -299,8 +311,8 @@ public class VentanaJuego extends JFrame {
         agentes = new Agente[numAgentes];
         int id = 0;
         outer:
-        for (int i = 0; i < TAMANO; i++) {
-            for (int j = 0; j < TAMANO; j++) {
+        for (int i = 0; i < tamanoActual; i++) {
+            for (int j = 0; j < tamanoActual; j++) {
                 if (snap[i][j] == 'A') {
                     agentes[id] = new Agente(tablero, id, i, j);
                     if (++id == numAgentes) {
@@ -359,7 +371,7 @@ public class VentanaJuego extends JFrame {
             }
         }
 
-        tablero = new Tablero(TAMANO);
+        tablero = new Tablero(tamanoActual);
         tablero.setOnCambio(() -> SwingUtilities.invokeLater(this::refrescar));
         modoColocacion = "";
         numAgentes = 2;
@@ -379,6 +391,26 @@ public class VentanaJuego extends JFrame {
 
         panelTablero.actualizar(tablero.getSnapshot());
         cambiarEast(crearSidebarSetup());
+    }
+
+    private void cambiarTamanoTablero() {
+        tablero = new Tablero(tamanoActual);
+        tablero.setOnCambio(() -> SwingUtilities.invokeLater(this::refrescar));
+        remove(panelTablero);
+        panelTablero = new PanelTablero(tamanoActual);
+        panelTablero.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                if (!juegoEnCurso) {
+                    manejarClick(e.getX(), e.getY());
+                }
+            }
+        });
+        add(panelTablero, BorderLayout.CENTER);
+        pack();
+        revalidate();
+        repaint();
+        actualizarEstado();
     }
 
     // ── Utilidades ───────────────────────────────────────────────────────────
